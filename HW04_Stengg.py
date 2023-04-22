@@ -1,12 +1,9 @@
 import pandas as pd
-import numpy as np
 
-
+# 1) Create a user profile based on the genres of the movies.
+# Count how often each movie genre appeared in the set of the movies
+# that the user has liked (i.e., when the rating is greater than 3).
 def createUserProfile():
-    # 1) Create a user profile based on the genres of the movies.
-    # Count how often each movie genre appeared in the set of the movies
-    # that the user has liked (i.e., when the rating is greater than 3).
-
     # drop if rating is 3 or worse
     user_ratings_filtered = user_ratings.loc[user_ratings['rating'] > 3]
 
@@ -22,113 +19,42 @@ def createUserProfile():
     #print(counted_ratings_per_genre)
     return counted_ratings_per_genre
 
-
+ # 2) Determine the similarity of each recommendable movie to this user profile.
+# Implement a simple strategy that simply determines the overlap in genres, ignoring how many movies of a certain genre the user has liked.
+# Inspect the outcomes of this recommendation strategy for a few users.
 def getSimilarities():
-    # 2) Determine the similarity of each recommendable movie to this user profile.
-    # Implement a simple strategy that simply determines the overlap in genres, ignoring how many movies of a certain genre the user has liked.
-    # Inspect the outcomes of this recommendation strategy for a few users.
-    similarities_ids = set() # such that no movie is recommended more than once
     similarities_ids_dict = {}  # such that no movie is recommended more than once (key is id)
-    #print('Trying to get similarities for {}'.format(user_id))
-    #liked_genres = set(user_profile.to_dict().keys())
-    #print(liked_genres)
 
-   # movies_ = data
-   # movies_['genres'] = movies_['genres'].str.split("|")
-   # print(movies_.to_string())
     for index, movie in data.iterrows():
-      #  print(movie)
         if movie['user_id'] == user_id:
             continue
         genres =  movie['genres'].split("|")
-       # print(genres)
-        #print(liked_genres)
-       # break
         intersected_set = set(genres).intersection(liked_genres)
-        #print(index, '***',intersected_set)
-        if intersected_set:
-            #print(intersected_set)
-            #print(len(intersected_set))
-            # if intersection of genres -> add to similar movies which are up for reccomendation
-            #sim.append(movie) # append is deprecated
-            similarities_ids.add(movie['movie_id'])
-            similarities_ids_dict[movie['movie_id']] =  len(intersected_set)
-          #  print(len(intersected_set))
-        #else:
-           # print(len(intersected_set))
-            #print('no overlap')
+        #if intersected_set:
+        similarities_ids_dict[movie['movie_id']] =  len(intersected_set)
 
-    #sim2 = pd.DataFrame(similarities,
-     #            columns=['user_id', 'movie_id', 'rating', 'timestamp', 'gender', 'age', 'occupation', 'zip', 'title',
-      #                    'genres'])
-    #similarities = pd.DataFrame.from_records(sim)
-    #sim2 = sim.groupby('movie_id')
-    # we now have movie id's of all recommended movies
-    similarities_ids_list = list(similarities_ids) # bc set is not spscribtable
-    similarities_ids_list.sort(reverse=True)
-    #similarities_ids_list = list(similarities_ids_dict)  # bc set is not spscribtable
     sorted_dict_similarities = dict(sorted(similarities_ids_dict.items(), key=lambda x: x[1], reverse=True)[:10])
-    #sorted_dict_similarities = dict(sorted(similarities_ids_dict.iteritems(), key=operator.itemgetter(1), reverse=True)[:10])
-    #print(sorted_dict_similarities)
-    #print(sorted_dict_similarities.keys())
     keys = sorted_dict_similarities.keys()
     return list(keys)
 
-    return similarities_ids_list[:10]
-
-
+# 3) Extend the algorithm as follows. When recommending, remove all movies that have no overlap with the given user profile.
+# Rank the remaining items based on their popularity1. Again, test your method with a few users.
+# 1 You can determine the popularity of any item by counting the numbers of ratings for it.
 def getSimilaritiesExtended():
-    # 3) Extend the algorithm as follows. When recommending, remove all movies that have no overlap with the given user profile.
-    # Rank the remaining items based on their popularity1. Again, test your method with a few users.
-    # 1 You can determine the popularity of any item by counting the numbers of ratings for it.
     similarities_ids = set() # such that no movie is recommended more than once
-    similarities_ids_dict = {}  # such that no movie is recommended more than once (key is id)
-    #print('Trying to get similarities for {}'.format(user_id))
-
-    #print(liked_genres)
-
-   # movies_ = data
-   # movies_['genres'] = movies_['genres'].str.split("|")
-   # print(movies_.to_string())
     for index, movie in data.iterrows():
-      #  print(movie)
         if movie['user_id'] == user_id:
             continue
         genres =  movie['genres'].split("|")
-       # print(genres)
-        #print(liked_genres)
-       # break
         intersected_set = set(genres).intersection(liked_genres)
-        #print(index, '***',intersected_set)
         # skip ones with no overlap
         if intersected_set:
-            #print(intersected_set)
-            #print(len(intersected_set))
-            # if intersection of genres -> add to similar movies which are up for reccomendation
-            #sim.append(movie) # append is deprecated
             similarities_ids.add(movie['movie_id'])
-            #similarities_ids_dict[movie['movie_id']] =  len(intersected_set)
-       # else:
-        #    print(len(intersected_set))
-         #   print('no overlap')
-
-    #sim2 = pd.DataFrame(similarities,
-     #            columns=['user_id', 'movie_id', 'rating', 'timestamp', 'gender', 'age', 'occupation', 'zip', 'title',
-      #                    'genres'])
-    #similarities = pd.DataFrame.from_records(sim)
-    #sim2 = sim.groupby('movie_id')
 
     # 1 You can determine the popularity of any item by counting the numbers of ratings for it.
-    #for movie in sim_movie_ids:+
-
-    #print('IDs',similarities_ids)
-
     possible_movies = data[data['movie_id'].isin(list(similarities_ids))]
-    #print(possible_movies)
 
     counted_ratings_per_genre = possible_movies.groupby('movie_id')['rating'].mean()
-    #print('avergae rating per movie')
-    #print(counted_ratings_per_genre.to_string())
 
     sorted_dict_ratings = dict(sorted(counted_ratings_per_genre.items(), key=lambda x: x[1], reverse=True)[:10])
     #print (sorted_dict_ratings)
@@ -137,66 +63,41 @@ def getSimilaritiesExtended():
     # none of the recommended movies regarding rating and overlap were rated already by the user so shall be fine
     return sorted_dict_ratings
 
+# 4) Implement a method that also considers the “genre‐count” in the user profile in some form.
 def getSimilaritiesExtendedGenreCount():
-    # 4) Implement a method that also considers the “genre‐count” in the user profile in some form.
+    genre_count = len(liked_genres)
     similarities_ids = set() # such that no movie is recommended more than once
-    similarities_ids_dict = {}  # such that no movie is recommended more than once (key is id)
-    #print('Trying to get similarities for {}'.format(user_id))
+    weights = set()  # such that no movie is recommended more than once
+    similarities = {}
 
-    #print(liked_genres)
-
-   # movies_ = data
-   # movies_['genres'] = movies_['genres'].str.split("|")
-   # print(movies_.to_string())
     for index, movie in data.iterrows():
-      #  print(movie)
         if movie['user_id'] == user_id:
             continue
         genres =  movie['genres'].split("|")
-       # print(genres)
-        #print(liked_genres)
-       # break
+
         intersected_set = set(genres).intersection(liked_genres)
-        #print(index, '***',intersected_set)
         # skip ones with no overlap
         if intersected_set:
-            #print(intersected_set)
-            #print(len(intersected_set))
-            # if intersection of genres -> add to similar movies which are up for reccomendation
-            #sim.append(movie) # append is deprecated
+            # weight factor is the bigger the more overlap we have
+            weight = len(intersected_set) / genre_count # more weight if more overlaps
             similarities_ids.add(movie['movie_id'])
-            #similarities_ids_dict[movie['movie_id']] =  len(intersected_set)
-       # else:
-        #    print(len(intersected_set))
-         #   print('no overlap')
-
-    #sim2 = pd.DataFrame(similarities,
-     #            columns=['user_id', 'movie_id', 'rating', 'timestamp', 'gender', 'age', 'occupation', 'zip', 'title',
-      #                    'genres'])
-    #similarities = pd.DataFrame.from_records(sim)
-    #sim2 = sim.groupby('movie_id')
-
-    # 1 You can determine the popularity of any item by counting the numbers of ratings for it.
-    #for movie in sim_movie_ids:+
-
-    #print('IDs',similarities_ids)
+            weights.add(weight)
+            similarities[movie['movie_id']] = weight
 
     possible_movies = data[data['movie_id'].isin(list(similarities_ids))]
-    #print(possible_movies)
 
-    counted_ratings_per_genre = possible_movies.groupby('movie_id')['rating'].mean()
-    #print('avergae rating per movie')
-    #print(counted_ratings_per_genre.to_string())
+    counted_ratings_per_genre = possible_movies.groupby('movie_id')['rating'].mean().reset_index()
+    print(counted_ratings_per_genre)
 
-    sorted_dict_ratings = dict(sorted(counted_ratings_per_genre.items(), key=lambda x: x[1], reverse=True)[:10])
-    #print (sorted_dict_ratings)
-    # {989: 5.0, 1830: 5.0, 3172: 5.0, 3233: 5.0, 3280: 5.0, 3382: 5.0, 3607: 5.0, 3656: 5.0, 3245: 4.8, 53: 4.75}
-    # tested with user 123
-    # none of the recommended movies regarding rating and overlap were rated already by the user so shall be fine
+    for id, movie in counted_ratings_per_genre.items():
+        #         counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]#['rating']*= similarities.get(id)
+        counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]['rating'] =\
+            counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]['rating']* similarities.get(id)
+
+    print(counted_ratings_per_genre)
+
+    sorted_dict_ratings = dict(sorted(counted_ratings_per_genre['rating'].items(), key=lambda x: x[1], reverse=True)[:10])
     return sorted_dict_ratings
-
-
-
 
 if __name__ == '__main__':
     print('Running the popularity‐aware content‐based recommender')
@@ -257,7 +158,7 @@ if __name__ == '__main__':
 
     # 4) Implement a method that also considers the “genre‐count” in the user profile in some form.
     sim_movie_ids_extended_genre_count = getSimilaritiesExtendedGenreCount()
-    print('Recommended movies according to C3) (overlap in genres extended)')
+    print('Recommended movies according to C4) (overlap in genres extended)')
     print (movies[movies['movie_id'].isin(sim_movie_ids_extended_genre_count)].to_string())
 
     # Test your method interactively with a few users to check the plausibility of the recommendations.
