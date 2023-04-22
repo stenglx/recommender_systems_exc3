@@ -1,12 +1,14 @@
 import pandas as pd
 
+
+def getLikedMoves():
+    return user_ratings.loc[user_ratings['rating'] > 3]
+
 # 1) Create a user profile based on the genres of the movies.
 # Count how often each movie genre appeared in the set of the movies
 # that the user has liked (i.e., when the rating is greater than 3).
 def createUserProfile():
     # drop if rating is 3 or worse
-    user_ratings_filtered = user_ratings.loc[user_ratings['rating'] > 3]
-
     # get genres from being genre1|genre2|... into seperated rows with duplicated other values
     user_ratings_filtered_split = user_ratings_filtered
     user_ratings_filtered_split['genres'] = user_ratings_filtered['genres'].str.split("|")
@@ -87,12 +89,13 @@ def getSimilaritiesExtendedGenreCount():
     possible_movies = data[data['movie_id'].isin(list(similarities_ids))]
 
     counted_ratings_per_genre = possible_movies.groupby('movie_id')['rating'].mean().reset_index()
+    # TODO check whether weight is actually added
     print(counted_ratings_per_genre)
 
     for id, movie in counted_ratings_per_genre.items():
         #         counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]#['rating']*= similarities.get(id)
         counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]['rating'] =\
-            counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]['rating']* similarities.get(id)
+            counted_ratings_per_genre[counted_ratings_per_genre['movie_id']==id]['rating'] * similarities.get(id)
 
     print(counted_ratings_per_genre)
 
@@ -123,14 +126,13 @@ if __name__ == '__main__':
     # Merge the data
     data = pd.merge(ratings, users, on='user_id')
     data = pd.merge(data, movies, on='movie_id')
-    print(data)
+    #print(data)
 
     print('User profile in terms of rated items of the user:')
-    #print(data[data['user_id'] == user_id].to_string(
-     #   index=False))
     user_ratings = data[data['user_id'] == user_id]
-    #print(user_ratings.to_string(
-     #   index=False))
+    user_ratings_filtered = getLikedMoves()
+    print(user_ratings_filtered[:10].to_string(
+        index=False))
 
     # C) Prints the top‐10 recommendations on the console. To implement the algorithm:
 
@@ -141,6 +143,7 @@ if __name__ == '__main__':
 
     # for futher use in the similarity methods I want the genres liked by the user as set
     liked_genres = set(user_profile.to_dict().keys())
+    print('Genres liked by user ',user_id, liked_genres)
 
     # 2) Determine the similarity of each recommendable movie to this user profile.
     # Implement a simple strategy that simply determines the overlap in genres, ignoring how many movies of a certain genre the user has liked.
